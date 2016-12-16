@@ -10,8 +10,16 @@ import (
 	"net/url"
 )
 
-var youtubeBaseUrl = "https://www.youtube.com"
-var youtubeSearchPath = "/results"
+type Config struct {
+	ListItemNumber int
+	SearchPhrase   string
+}
+
+type Provider struct {
+	Name       string
+	BaseUrl    string
+	SearchPath string
+}
 
 type Video struct {
 	Title string
@@ -19,32 +27,50 @@ type Video struct {
 	Id    string
 }
 
-func GetWildAndTough(searchUrl string) {
-	doc, err := goquery.NewDocument(searchUrl)
+func GetWildAndTough(p Provider, c Config) {
+	doc, err := goquery.NewDocument(GetSearchUrl(p, c))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	doc.Find("h3.yt-lockup-title").Each(func(i int, s *goquery.Selection) {
-		if i > 5 { return }
+		if i > c.ListItemNumber {
+			return
+		}
 		v := Video{}
 		v.Title = s.Find("a").Text()
 		v.Path, _ = s.Find("a").Attr("href")
-		Url := youtubeBaseUrl + v.Path
+		Url := p.BaseUrl + v.Path
 		fmt.Printf("%s | href=%s\n", v.Title, Url)
 	})
 }
 
-func GetSearchUrl(search_phrase string) string {
-	return youtubeBaseUrl + youtubeSearchPath + "?search_query=" + url.QueryEscape(search_phrase)
+func GetSearchUrl(p Provider, c Config) string {
+	return p.BaseUrl + p.SearchPath + "?search_query=" + url.QueryEscape(c.SearchPhrase)
+}
+
+func GetConfig() Config {
+	c := Config{}
+	c.ListItemNumber = 5
+	c.SearchPhrase = "Get Wild"
+	return c
+}
+
+func GetProvider() Provider {
+	p := Provider{}
+	p.Name = "YouTube"
+	p.BaseUrl = "https://www.youtube.com"
+	p.SearchPath = "/results"
+	return p
 }
 
 func main() {
-	search_phrase := "get wild"
+	p := GetProvider()
+	c := GetConfig()
 
-	fmt.Println("Get Wild")
+	fmt.Println(":gun:")
 	fmt.Println("---")
-	GetWildAndTough(GetSearchUrl(search_phrase))
+	GetWildAndTough(p, c)
 	fmt.Println("---")
-	fmt.Println("Refresh | refresh=true")
+	fmt.Println("Refresh | refresh=true color=#C0C0C0")
 }
